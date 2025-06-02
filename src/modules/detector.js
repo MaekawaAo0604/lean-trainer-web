@@ -1,15 +1,15 @@
-// src/modules/detector.js
-import * as poseDetection from "@tensorflow-models/pose-detection";
-import "@tensorflow/tfjs-backend-webgl";
+import * as poseDetection from '@tensorflow-models/pose-detection';
 
 export async function initDetector() {
-  await poseDetection.createDetector; // Backendセットアップ待ち
+  const detectorConfig = {
+    modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, // ✅ 修正
+    enableSmoothing: true
+  };
+
   const detector = await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,
-    {
-      modelType: "Lightning",
-      enableSmoothing: true,
-    }
+    detectorConfig
   );
+
   return detector;
 }

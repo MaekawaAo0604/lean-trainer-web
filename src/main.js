@@ -15,12 +15,15 @@ let stream;
 // カメラ初期化とモデルロード
 async function init() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-    });
-    video.srcObject = stream;
-    await video.play();
-
+    try {
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  video.srcObject = stream;
+  await video.play();
+  statusEl.textContent = 'READY';
+} catch (e) {
+  console.error('Camera initialization error:', e);
+  statusEl.textContent = 'CAMERA ERROR: ' + e.message;
+}
     detector = await initDetector();
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
