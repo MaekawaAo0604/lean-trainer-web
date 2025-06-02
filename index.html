@@ -1,0 +1,27 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+  <link rel="manifest" href="/src/manifest.webmanifest" />
+  <title>Lean Trainer Web</title>
+</head>
+<body>
+  <video id="cam" playsinline muted></video>
+  <canvas id="overlay"></canvas>
+  <div id="flash"></div>
+
+  <div id="ui">
+    <label for="threshold">許容 ms:
+      <input type="range" id="threshold" min="100" max="1000" value="300" />
+    </label>
+    <span id="status">READY</span>
+  </div>
+
+  <audio id="beep" src="/beep.mp3" preload="auto"></audio>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
