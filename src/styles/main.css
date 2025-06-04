@@ -26,14 +26,39 @@ canvas {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  padding: 10px 20px;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px 25px;
+  border-radius: 12px;
   color: #fff;
   font-family: sans-serif;
+  max-width: 90vw;
+  box-sizing: border-box;
 }
+
+#mode-selector {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#mode-selector label {
+  margin: 0 10px;
+  cursor: pointer;
+}
+
+#mode-selector input[type="radio"] {
+  margin-right: 5px;
+}
+
+#settings {
+  margin-bottom: 10px;
+}
+
+#settings label {
+  display: block;
+  margin-bottom: 8px;
+}
+
 #ui select {
-  vertical-align: middle;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -41,7 +66,50 @@ canvas {
   padding: 4px 8px;
   margin-left: 8px;
 }
-#status {
+
+#ui button {
+  background: rgba(0, 150, 255, 0.8);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
   margin-left: 10px;
+}
+
+#ui button:hover {
+  background: rgba(0, 150, 255, 1);
+}
+
+#status {
+  display: block;
+  text-align: center;
   font-weight: bold;
+  font-size: 18px;
+  margin-top: 10px;
+  padding: 5px;
+}
+
+#video-list {
+  margin-top: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  padding-top: 10px;
+}
+
+#video-list h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.video-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-size: 12px;
 }
