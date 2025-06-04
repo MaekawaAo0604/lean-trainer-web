@@ -51,17 +51,23 @@ if ('serviceWorker' in navigator) {
 
 function loop() {
   detector.estimatePoses(video).then(poses => {
-    const hit = judge(poses, ctx, Number(thresholdInput.value));
+    const result = judge(poses, ctx, Number(thresholdInput.value));
 
-    if (hit) {
+    if (result.hit) {
       flashHit(stream);
       saveHit();
-      statusEl.textContent = 'HIT!';
+      const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';
+      statusEl.textContent = hitType;
       setTimeout(() => {
         statusEl.textContent = 'READY';
       }, 500);
+    } else if (result.cooling) {
+      statusEl.textContent = 'COOLING...';
     } else if (poses.length && poses[0].score > 0.3) {
       saveSuccess();
+      if (statusEl.textContent !== 'HIT!' && statusEl.textContent !== 'ARMS HIT!' && statusEl.textContent !== 'FULL HIT!') {
+        statusEl.textContent = 'READY';
+      }
     }
 
     requestAnimationFrame(loop);
