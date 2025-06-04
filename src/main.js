@@ -41,6 +41,9 @@ async function init() {
     // UI初期化
     initUI();
     
+    // 初期状態を通常モードに設定
+    setMode('normal');
+    
     statusEl.textContent = 'READY';
     loop();
   } catch (e) {
@@ -65,6 +68,7 @@ function initUI() {
   const modeRadios = document.querySelectorAll('input[name="mode"]');
   modeRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
+      console.log('Mode changed to:', e.target.value);
       setMode(e.target.value);
       updateModeUI();
     });
@@ -93,6 +97,8 @@ function updateModeUI() {
   const currentMode = getCurrentMode();
   const recordingSettings = document.getElementById('recording-settings');
   const videoList = document.getElementById('video-list');
+  
+  console.log('Updating UI for mode:', currentMode);
   
   if (currentMode === 'recording') {
     recordingSettings.style.display = 'block';

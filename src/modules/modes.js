@@ -6,8 +6,12 @@ let trainingStarted = false;
 
 export function setMode(mode) {
   currentMode = mode;
-  trainingStarted = false;
-  waitingPhase = false;
+  resetTraining();
+  
+  // 通常モードの場合は即座にトレーニング開始
+  if (mode === 'normal') {
+    trainingStarted = true;
+  }
 }
 
 export function getCurrentMode() {
@@ -79,7 +83,7 @@ export function isWaiting() {
 }
 
 export function isTrainingStarted() {
-  return trainingStarted || currentMode === 'normal';
+  return trainingStarted;
 }
 
 export function resetTraining() {
