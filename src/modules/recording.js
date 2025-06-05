@@ -123,66 +123,77 @@ export async function getVideoList() {
 }
 
 export async function downloadVideo(videoId) {
+  console.log(`Download requested for video ID: ${videoId}`);
+  
   try {
     const video = await getVideo(videoId);
     
     if (!video) {
-      console.error('Video not found:', videoId);
+      console.error('Video not found for ID:', videoId);
       return false;
     }
 
+    if (!video.blob) {
+      console.error('Video blob is missing for ID:', videoId);
+      return false;
+    }
+
+    // Blobの検証
+    if (!(video.blob instanceof Blob)) {
+      console.error('Video data is not a valid Blob for ID:', videoId, typeof video.blob);
+      return false;
+    }
+
+    console.log(`Video blob validation passed: size=${video.blob.size}, type=${video.blob.type}`);
+
     // BlobからURLを作成
-    const url = URL.createObjectURL(video.blob);
+    let url;
+    try {
+      url = URL.createObjectURL(video.blob);
+      console.log(`Blob URL created: ${url}`);
+    } catch (urlError) {
+      console.error('Failed to create blob URL:', urlError);
+      return false;
+    }
+
     const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
     const filename = `${video.filename}.${extension}`;
     
-    console.log(`Starting download: ${filename}, size: ${video.blob.size} bytes, type: ${video.blob.type}`);
+    console.log(`Starting download: ${filename}, size: ${video.blob.size} bytes`);
     
-    // より確実なダウンロード方法
-    if (navigator.userAgent.indexOf('Chrome') !== -1 || navigator.userAgent.indexOf('Safari') !== -1) {
-      // Chrome/Safari用
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.style.display = 'none';
-      
-      document.body.appendChild(a);
-      
-      // ユーザー操作として処理
+    // シンプルで確実なダウンロード方法
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    
+    document.body.appendChild(a);
+    
+    try {
+      // クリックイベントを発火
       a.click();
-      
-      // クリーンアップ
-      setTimeout(() => {
+      console.log(`Download click executed for: ${filename}`);
+    } catch (clickError) {
+      console.error('Click failed:', clickError);
+      return false;
+    }
+    
+    // クリーンアップ
+    setTimeout(() => {
+      try {
         if (document.body.contains(a)) {
           document.body.removeChild(a);
         }
         URL.revokeObjectURL(url);
-      }, 1000);
-    } else {
-      // その他のブラウザ用フォールバック
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.target = '_blank';
-      
-      // 強制的にクリック
-      const clickEvent = new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: false
-      });
-      
-      document.body.appendChild(link);
-      link.dispatchEvent(clickEvent);
-      document.body.removeChild(link);
-      
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+        console.log(`Cleanup completed for: ${filename}`);
+      } catch (cleanupError) {
+        console.error('Cleanup failed:', cleanupError);
+      }
+    }, 2000); // クリーンアップ時間を延長
     
-    console.log(`Download initiated: ${filename}`);
     return true;
   } catch (error) {
-    console.error('Error downloading video:', error);
+    console.error('Error in downloadVideo:', error);
     return false;
   }
 }

@@ -103,15 +103,35 @@ function initUI() {
     if (e.target.classList.contains('download-btn')) {
       const videoId = e.target.getAttribute('data-video-id');
       if (videoId) {
+        console.log(`Download button clicked for video ID: ${videoId}`);
+        
         e.target.disabled = true;
         e.target.textContent = 'DL中...';
         
-        const success = await downloadVideo(videoId);
-        
-        setTimeout(() => {
-          e.target.disabled = false;
-          e.target.textContent = 'ダウンロード';
-        }, 1000);
+        try {
+          const success = await downloadVideo(videoId);
+          
+          if (success) {
+            e.target.textContent = '完了';
+            setTimeout(() => {
+              e.target.disabled = false;
+              e.target.textContent = 'ダウンロード';
+            }, 2000);
+          } else {
+            e.target.textContent = 'エラー';
+            setTimeout(() => {
+              e.target.disabled = false;
+              e.target.textContent = 'ダウンロード';
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Download error:', error);
+          e.target.textContent = 'エラー';
+          setTimeout(() => {
+            e.target.disabled = false;
+            e.target.textContent = 'ダウンロード';
+          }, 2000);
+        }
       }
     }
   });

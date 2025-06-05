@@ -82,13 +82,28 @@ export async function getAllVideos() {
 export async function getVideo(videoId) {
   if (!db) await initDB();
   
+  console.log(`Getting video with ID: ${videoId}`);
+  
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([STORE_NAME], 'readonly');
     const objectStore = transaction.objectStore(STORE_NAME);
     const request = objectStore.get(videoId);
     
     request.onsuccess = () => {
-      resolve(request.result);
+      const result = request.result;
+      if (result) {
+        console.log(`Video found: ${result.filename}, blob size: ${result.blob?.size || 'undefined'}, blob type: ${result.blob?.type || 'undefined'}`);
+        
+        // Blobが正しく保存されているかチェック
+        if (!result.blob || !(result.blob instanceof Blob)) {
+          console.error('Invalid blob data for video:', videoId, result);
+          reject(new Error('Invalid blob data'));
+          return;
+        }
+      } else {
+        console.error('Video not found:', videoId);
+      }
+      resolve(result);
     };
     
     request.onerror = () => {
