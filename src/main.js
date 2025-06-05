@@ -89,6 +89,11 @@ function initUI() {
     await updateVideoList();
   });
 
+  // 動画保存イベントをリッスン
+  window.addEventListener('videoSaved', () => {
+    updateVideoList();
+  });
+
   updateModeUI();
   updateVideoList();
 }
@@ -162,7 +167,6 @@ function loop() {
       // 録画モードでは動画を保存
       if (currentMode === 'recording' && recordingSupported) {
         captureHitVideo();
-        setTimeout(() => updateVideoList(), 1000); // 保存処理の完了を待つ
       }
       
       const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';

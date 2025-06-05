@@ -64,6 +64,10 @@ export function captureHitVideo() {
   if (mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
     isRecording = false;
+    // 録画を再開（次のHitに備える）
+    setTimeout(() => {
+      startBufferRecording();
+    }, 100);
   }
 }
 
@@ -92,6 +96,9 @@ async function saveVideo() {
     await cleanupOldVideos(); // 古い動画を削除
     
     console.log(`Hit video saved: ${filename}`);
+    
+    // 動画保存完了を通知
+    window.dispatchEvent(new CustomEvent('videoSaved', { detail: videoData }));
   } catch (error) {
     console.error('Error saving video:', error);
   }
