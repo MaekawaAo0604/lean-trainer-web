@@ -98,6 +98,24 @@ function initUI() {
     updateVideoList();
   });
 
+  // 動画ダウンロードボタンのイベント委譲
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('download-btn')) {
+      const videoId = e.target.getAttribute('data-video-id');
+      if (videoId) {
+        e.target.disabled = true;
+        e.target.textContent = 'DL中...';
+        
+        const success = await downloadVideo(videoId);
+        
+        setTimeout(() => {
+          e.target.disabled = false;
+          e.target.textContent = 'ダウンロード';
+        }, 1000);
+      }
+    }
+  });
+
   // トレーニング開始・停止イベントをリッスン（録画制御）
   window.addEventListener('trainingStarted', () => {
     if (getCurrentMode() === 'recording' && recordingSupported) {
@@ -173,13 +191,7 @@ async function updateVideoList() {
     videosContainer.appendChild(item);
   });
   
-  // Add event listeners to download buttons
-  document.querySelectorAll('.download-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const videoId = e.target.getAttribute('data-video-id');
-      await downloadVideo(videoId);
-    });
-  });
+  // イベント委譲でダウンロードボタンのクリックを処理（重複防止）
 }
 
 function loop() {

@@ -149,12 +149,30 @@ export async function downloadVideo(videoId) {
     const a = document.createElement('a');
     a.href = url;
     a.download = `${video.filename}.${extension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.style.display = 'none';
     
-    // URLを解放
-    URL.revokeObjectURL(url);
+    // ブラウザ互換性の向上
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    
+    document.body.appendChild(a);
+    
+    // クリックイベントを確実に発火
+    if (a.click) {
+      a.click();
+    } else if (document.createEvent) {
+      const evt = document.createEvent('MouseEvents');
+      evt.initEvent('click', true, true);
+      a.dispatchEvent(evt);
+    }
+    
+    // URLを少し遅れて解放
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    }, 500);
     
     console.log(`Downloading video: ${video.filename}.${extension}`);
     
