@@ -45,15 +45,7 @@ export function initRecording(stream) {
 function startBufferRecording() {
   if (mediaRecorder && mediaRecorder.state === 'inactive' && shouldRecord) {
     recordedChunks = [];
-    mediaRecorder.start(100); // 100ms間隔でデータ取得
-    
-    // バッファサイズを制限
-    setTimeout(() => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        setTimeout(startBufferRecording, 10); // 短い間隔で再開
-      }
-    }, BUFFER_DURATION);
+    mediaRecorder.start(); // 連続録画開始
   }
 }
 
@@ -77,16 +69,14 @@ export function stopRecording() {
 export function captureHitVideo() {
   if (!mediaRecorder || !shouldRecord) return;
   
-  // Hit時点での録画データを保存
+  // Hit後も2秒間録画を続けてから停止
   if (mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
-    isRecording = false;
-    // 録画を再開（次のHitに備える）
     setTimeout(() => {
-      if (shouldRecord) {
-        startBufferRecording();
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        isRecording = false;
       }
-    }, 100);
+    }, 2000); // Hit後2秒間録画継続
   }
 }
 
@@ -114,7 +104,7 @@ async function saveVideo() {
     await saveVideoToDB(videoData);
     await cleanupOldVideos(); // 古い動画を削除
     
-    console.log(`Hit video saved: ${filename}`);
+    console.log(`Hit video saved: ${filename}, size: ${blob.size} bytes, chunks: ${recordedChunks.length}, type: ${mimeType}`);
     
     // 動画保存完了を通知
     window.dispatchEvent(new CustomEvent('videoSaved', { detail: videoData }));
@@ -144,38 +134,52 @@ export async function downloadVideo(videoId) {
     // BlobからURLを作成
     const url = URL.createObjectURL(video.blob);
     const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
+    const filename = `${video.filename}.${extension}`;
     
-    // ダウンロード用のリンクを作成
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${video.filename}.${extension}`;
-    a.style.display = 'none';
+    console.log(`Starting download: ${filename}, size: ${video.blob.size} bytes, type: ${video.blob.type}`);
     
-    // ブラウザ互換性の向上
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    
-    document.body.appendChild(a);
-    
-    // クリックイベントを確実に発火
-    if (a.click) {
+    // より確実なダウンロード方法
+    if (navigator.userAgent.indexOf('Chrome') !== -1 || navigator.userAgent.indexOf('Safari') !== -1) {
+      // Chrome/Safari用
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      
+      document.body.appendChild(a);
+      
+      // ユーザー操作として処理
       a.click();
-    } else if (document.createEvent) {
-      const evt = document.createEvent('MouseEvents');
-      evt.initEvent('click', true, true);
-      a.dispatchEvent(evt);
+      
+      // クリーンアップ
+      setTimeout(() => {
+        if (document.body.contains(a)) {
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } else {
+      // その他のブラウザ用フォールバック
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.target = '_blank';
+      
+      // 強制的にクリック
+      const clickEvent = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: false
+      });
+      
+      document.body.appendChild(link);
+      link.dispatchEvent(clickEvent);
+      document.body.removeChild(link);
+      
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     
-    // URLを少し遅れて解放
-    setTimeout(() => {
-      if (document.body.contains(a)) {
-        document.body.removeChild(a);
-      }
-      URL.revokeObjectURL(url);
-    }, 500);
-    
-    console.log(`Downloading video: ${video.filename}.${extension}`);
-    
+    console.log(`Download initiated: ${filename}`);
     return true;
   } catch (error) {
     console.error('Error downloading video:', error);
