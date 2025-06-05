@@ -170,6 +170,11 @@ canvas {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.download-btn-link {
+  text-decoration: none;
+  display: inline-block;
+}
+
 .download-btn {
   padding: 6px 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -186,6 +191,14 @@ canvas {
 .download-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.download-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Loading overlay styles */

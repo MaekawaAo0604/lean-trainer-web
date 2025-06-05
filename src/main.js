@@ -98,67 +98,22 @@ function initUI() {
     updateVideoList();
   });
 
-  // 動画ダウンロードボタンのイベント委譲
-  document.addEventListener('click', async (e) => {
+  // ダウンロードクリック時のフィードバック
+  document.addEventListener('click', (e) => {
     if (e.target.classList.contains('download-btn')) {
-      const videoId = e.target.getAttribute('data-video-id');
-      if (videoId) {
-        console.log(`Download button clicked for video ID: ${videoId}`);
-        
-        // ユーザーの直接クリックを利用してダウンロード実行
-        e.preventDefault();
-        e.stopPropagation();
-        
-        e.target.disabled = true;
-        e.target.textContent = 'DL準備中...';
-        
-        try {
-          // 動画データを取得
-          const videos = await getVideoList();
-          const video = videos.find(v => v.id === videoId);
-          
-          if (!video) {
-            throw new Error('Video not found');
-          }
-          
-          // Blob URLを作成
-          const url = URL.createObjectURL(video.blob);
-          const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
-          const filename = `${video.filename}.${extension}`;
-          
-          // ユーザーの直接クリックでダウンロードリンクを作成
-          const downloadLink = document.createElement('a');
-          downloadLink.href = url;
-          downloadLink.download = filename;
-          downloadLink.style.display = 'none';
-          
-          // リンクをボタンの近くに配置
-          e.target.parentNode.appendChild(downloadLink);
-          
-          // ユーザーのクリックイベントを使ってダウンロード実行
-          downloadLink.click();
-          
-          e.target.textContent = '完了';
-          
-          // クリーンアップ
-          setTimeout(() => {
-            if (downloadLink.parentNode) {
-              downloadLink.parentNode.removeChild(downloadLink);
-            }
-            URL.revokeObjectURL(url);
-            e.target.disabled = false;
-            e.target.textContent = 'ダウンロード';
-          }, 2000);
-          
-        } catch (error) {
-          console.error('Download error:', error);
-          e.target.textContent = 'エラー';
-          setTimeout(() => {
-            e.target.disabled = false;
-            e.target.textContent = 'ダウンロード';
-          }, 2000);
-        }
-      }
+      const button = e.target;
+      const link = button.parentElement;
+      
+      console.log(`Download initiated: ${link.download}`);
+      
+      button.textContent = 'DL中...';
+      button.disabled = true;
+      
+      // 少し遅れてボタンをリセット
+      setTimeout(() => {
+        button.textContent = 'ダウンロード';
+        button.disabled = false;
+      }, 2000);
     }
   });
 
@@ -229,15 +184,27 @@ async function updateVideoList() {
   videos.forEach((video) => {
     const item = document.createElement('div');
     item.className = 'video-item';
+    
+    // 事前にBlobURLを作成してダウンロードリンクを準備
+    const url = URL.createObjectURL(video.blob);
+    const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
+    const filename = `${video.filename}.${extension}`;
+    
     item.innerHTML = `
       <span>${video.filename}</span>
       <span>${new Date(video.timestamp).toLocaleTimeString()}</span>
-      <button class="download-btn" data-video-id="${video.id}">ダウンロード</button>
+      <a href="${url}" download="${filename}" class="download-btn-link">
+        <button class="download-btn">ダウンロード</button>
+      </a>
     `;
+    
     videosContainer.appendChild(item);
+    
+    // クリーンアップのために5分後にURLを解放
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 300000); // 5分後
   });
-  
-  // イベント委譲でダウンロードボタンのクリックを処理（重複防止）
 }
 
 function loop() {
