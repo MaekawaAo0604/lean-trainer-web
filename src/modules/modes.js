@@ -11,6 +11,17 @@ export function setMode(mode) {
   // 通常モードの場合は即座にトレーニング開始
   if (mode === 'normal') {
     trainingStarted = true;
+    updateStatus('READY');
+  }
+  // 録画モードの場合は録画開始まで待機
+  else if (mode === 'recording') {
+    trainingStarted = false;
+    updateStatus('録画開始ボタンを押してください');
+  }
+  // 休憩モードの場合は判定を完全に停止
+  else if (mode === 'rest') {
+    trainingStarted = false;
+    updateStatus('休憩中 - Hit判定停止');
   }
 }
 

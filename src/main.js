@@ -130,6 +130,14 @@ function updateVideoList() {
 
 function loop() {
   detector.estimatePoses(video).then(poses => {
+    const currentMode = getCurrentMode();
+    
+    // 休憩モードの場合は判定を一切行わない
+    if (currentMode === 'rest') {
+      requestAnimationFrame(loop);
+      return;
+    }
+    
     // 録画モードで待機中は判定しない
     if (!isTrainingStarted()) {
       requestAnimationFrame(loop);
@@ -143,7 +151,7 @@ function loop() {
       saveHit();
       
       // 録画モードでは動画を保存
-      if (getCurrentMode() === 'recording' && recordingSupported) {
+      if (currentMode === 'recording' && recordingSupported) {
         captureHitVideo();
         updateVideoList();
       }
