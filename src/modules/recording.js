@@ -91,16 +91,6 @@ async function saveVideo() {
     await saveVideoToDB(videoData);
     await cleanupOldVideos(); // 古い動画を削除
     
-    // 自動ダウンロード
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.${extension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
     console.log(`Hit video saved: ${filename}`);
   } catch (error) {
     console.error('Error saving video:', error);
