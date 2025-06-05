@@ -5,6 +5,7 @@ let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 let recordingBuffer = [];
+let shouldRecord = false; // 録画すべきかどうかのフラグ
 const BUFFER_DURATION = 3000; // 3秒間のバッファ
 
 // 初期化時にIndexedDBも初期化
@@ -37,13 +38,12 @@ export function initRecording(stream) {
     }
   };
 
-  // 連続録画でバッファを維持
-  startBufferRecording();
+  // 録画の準備完了（手動で開始する）
   return true;
 }
 
 function startBufferRecording() {
-  if (mediaRecorder && mediaRecorder.state === 'inactive') {
+  if (mediaRecorder && mediaRecorder.state === 'inactive' && shouldRecord) {
     recordedChunks = [];
     mediaRecorder.start(100); // 100ms間隔でデータ取得
     
@@ -57,8 +57,24 @@ function startBufferRecording() {
   }
 }
 
+// 録画開始
+export function startRecording() {
+  shouldRecord = true;
+  if (mediaRecorder && mediaRecorder.state === 'inactive') {
+    startBufferRecording();
+  }
+}
+
+// 録画停止
+export function stopRecording() {
+  shouldRecord = false;
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+}
+
 export function captureHitVideo() {
-  if (!mediaRecorder) return;
+  if (!mediaRecorder || !shouldRecord) return;
   
   // Hit時点での録画データを保存
   if (mediaRecorder.state === 'recording') {
@@ -66,7 +82,9 @@ export function captureHitVideo() {
     isRecording = false;
     // 録画を再開（次のHitに備える）
     setTimeout(() => {
-      startBufferRecording();
+      if (shouldRecord) {
+        startBufferRecording();
+      }
     }, 100);
   }
 }

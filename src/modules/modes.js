@@ -60,6 +60,9 @@ function endWaitingPhase() {
   updateStatus('開始！');
   playStartSignal();
   
+  // 録画開始を通知
+  window.dispatchEvent(new CustomEvent('trainingStarted'));
+  
   setTimeout(() => {
     updateStatus('READY');
   }, 1000);
@@ -99,6 +102,10 @@ export function isTrainingStarted() {
 
 export function resetTraining() {
   waitingPhase = false;
+  if (trainingStarted) {
+    // 録画停止を通知
+    window.dispatchEvent(new CustomEvent('trainingStopped'));
+  }
   trainingStarted = false;
   waitStartTime = null;
 }

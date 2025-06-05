@@ -4,7 +4,7 @@ import { initDetector } from './modules/detector.js';
 import { judge } from './modules/hitJudge.js';
 import { flashHit } from './modules/flash.js';
 import { saveHit, saveSuccess } from './modules/storage.js';
-import { initRecording, captureHitVideo, getVideoList, clearVideoList, downloadVideo } from './modules/recording.js';
+import { initRecording, captureHitVideo, getVideoList, clearVideoList, downloadVideo, startRecording, stopRecording } from './modules/recording.js';
 import { setMode, getCurrentMode, startWaitingPhase, isTrainingStarted, resetTraining } from './modules/modes.js';
 
 const video = document.getElementById('cam');
@@ -94,6 +94,19 @@ function initUI() {
     updateVideoList();
   });
 
+  // トレーニング開始・停止イベントをリッスン（録画制御）
+  window.addEventListener('trainingStarted', () => {
+    if (getCurrentMode() === 'recording' && recordingSupported) {
+      startRecording();
+    }
+  });
+
+  window.addEventListener('trainingStopped', () => {
+    if (getCurrentMode() === 'recording' && recordingSupported) {
+      stopRecording();
+    }
+  });
+
   updateModeUI();
   updateVideoList();
 }
@@ -167,6 +180,14 @@ function loop() {
       // 録画モードでは動画を保存
       if (currentMode === 'recording' && recordingSupported) {
         captureHitVideo();
+        // Hit後のクールダウン中は録画を一時停止
+        stopRecording();
+        // 2秒後（クールダウン終了後）に録画再開
+        setTimeout(() => {
+          if (getCurrentMode() === 'recording' && recordingSupported && isTrainingStarted()) {
+            startRecording();
+          }
+        }, 2000);
       }
       
       const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';
