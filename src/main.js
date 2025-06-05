@@ -5,7 +5,7 @@ import { judge } from './modules/hitJudge.js';
 import { flashHit } from './modules/flash.js';
 import { saveHit, saveSuccess } from './modules/storage.js';
 import { initRecording, captureHitVideo, getVideoList, clearVideoList, downloadVideo, startRecording, stopRecording } from './modules/recording.js';
-import { setMode, getCurrentMode, startWaitingPhase, isTrainingStarted, resetTraining } from './modules/modes.js';
+import { setMode, getCurrentMode, startWaitingPhase, isTrainingStarted, resetTraining, endRecordingSession, isRecordingSessionActive } from './modules/modes.js';
 
 const video = document.getElementById('cam');
 const canvas = document.getElementById('overlay');
@@ -69,13 +69,11 @@ async function init() {
 
 function initUI() {
   // モード切り替え
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
-  modeRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      console.log('Mode changed to:', e.target.value);
-      setMode(e.target.value);
-      updateModeUI();
-    });
+  const modeSelect = document.getElementById('mode-select');
+  modeSelect.addEventListener('change', (e) => {
+    console.log('Mode changed to:', e.target.value);
+    setMode(e.target.value);
+    updateModeUI();
   });
 
   // 録画開始ボタン
@@ -83,7 +81,9 @@ function initUI() {
   startRecordingBtn.addEventListener('click', () => {
     const waitTime = Number(document.getElementById('wait-time').value);
     resetTraining();
-    startWaitingPhase(waitTime);
+    if (startWaitingPhase(waitTime)) {
+      updateRecordingUI();
+    }
   });
 
   // 動画リスト管理
@@ -115,17 +115,26 @@ function initUI() {
   updateVideoList();
 }
 
+function updateRecordingUI() {
+  const startRecordingBtn = document.getElementById('start-recording');
+  if (isRecordingSessionActive()) {
+    startRecordingBtn.textContent = '録画中...';
+    startRecordingBtn.disabled = true;
+  } else {
+    startRecordingBtn.textContent = '録画開始';
+    startRecordingBtn.disabled = false;
+  }
+}
+
 function hideLoading() {
   const loadingOverlay = document.getElementById('loading-overlay');
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
+  const modeSelect = document.getElementById('mode-select');
   
   // ローディングオーバーレイを非表示
   loadingOverlay.style.display = 'none';
   
   // モード選択を有効化
-  modeRadios.forEach(radio => {
-    radio.disabled = false;
-  });
+  modeSelect.disabled = false;
 }
 
 function updateModeUI() {
@@ -140,6 +149,7 @@ function updateModeUI() {
     if (recordingSupported) {
       videoList.style.display = 'block';
     }
+    updateRecordingUI();
   } else {
     recordingSettings.style.display = 'none';
     videoList.style.display = 'none';
@@ -194,15 +204,21 @@ function loop() {
       flashHit(stream);
       saveHit();
       
-      // 録画モードでは動画を保存
-      if (currentMode === 'recording' && recordingSupported) {
+      // 録画モードでは動画を保存してセッション終了
+      if (currentMode === 'recording' && recordingSupported && isRecordingSessionActive()) {
         captureHitVideo();
+        endRecordingSession();
+        updateRecordingUI(); // UI更新
       }
       
       const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';
       statusEl.textContent = hitType;
       setTimeout(() => {
-        statusEl.textContent = 'READY';
+        if (currentMode === 'recording' && !isRecordingSessionActive()) {
+          statusEl.textContent = '録画完了 - 再録画するには録画開始ボタンを押してください';
+        } else {
+          statusEl.textContent = 'READY';
+        }
       }, 500);
     } else if (result.cooling) {
       statusEl.textContent = 'COOLING...';

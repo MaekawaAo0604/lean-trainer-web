@@ -22,15 +22,12 @@
 
   <div id="ui">
     <div id="mode-selector">
-      <label>
-        <input type="radio" name="mode" value="normal" checked disabled> 通常モード
-      </label>
-      <label>
-        <input type="radio" name="mode" value="recording" disabled> 録画モード
-      </label>
-      <label>
-        <input type="radio" name="mode" value="rest" disabled> 休憩モード
-      </label>
+      <label for="mode-select">モード:</label>
+      <select id="mode-select" disabled>
+        <option value="normal">🎯 通常モード</option>
+        <option value="recording">📹 録画モード</option>
+        <option value="rest">😴 休憩モード</option>
+      </select>
     </div>
     
     <div id="settings">

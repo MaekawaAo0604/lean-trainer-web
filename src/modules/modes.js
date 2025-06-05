@@ -3,6 +3,7 @@ let currentMode = 'normal';
 let waitingPhase = false;
 let waitStartTime = null;
 let trainingStarted = false;
+let recordingSession = false; // 録画セッションの状態
 
 export function setMode(mode) {
   currentMode = mode;
@@ -30,8 +31,9 @@ export function getCurrentMode() {
 }
 
 export function startWaitingPhase(waitTimeSeconds) {
-  if (currentMode !== 'recording') return false;
+  if (currentMode !== 'recording' || recordingSession) return false;
   
+  recordingSession = true; // 録画セッション開始
   waitingPhase = true;
   trainingStarted = false;
   waitStartTime = performance.now();
@@ -108,4 +110,17 @@ export function resetTraining() {
   }
   trainingStarted = false;
   waitStartTime = null;
+  // 録画セッションはリセットしない（手動でのみリセット）
+}
+
+export function endRecordingSession() {
+  recordingSession = false;
+  trainingStarted = false;
+  waitingPhase = false;
+  // 録画停止を通知
+  window.dispatchEvent(new CustomEvent('trainingStopped'));
+}
+
+export function isRecordingSessionActive() {
+  return recordingSession;
 }

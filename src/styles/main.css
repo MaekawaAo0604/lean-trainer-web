@@ -26,113 +26,166 @@ canvas {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  padding: 20px 35px;
-  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(15, 15, 35, 0.95), rgba(25, 25, 50, 0.95));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px 32px;
+  border-radius: 20px;
   color: #fff;
-  font-family: sans-serif;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: 95vw;
   box-sizing: border-box;
   font-size: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 #mode-selector {
-  margin-bottom: 10px;
-  text-align: center;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 #mode-selector label {
-  margin: 0 15px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-#mode-selector input[type="radio"] {
-  margin-right: 8px;
-  transform: scale(1.2);
+  font-weight: 600;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 #settings {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 #settings label {
-  display: block;
-  margin-bottom: 12px;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 #ui select {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-left: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 16px;
   font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+#ui select:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#ui select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #4facfe;
+  box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.3);
 }
 
 #ui button {
-  background: rgba(0, 150, 255, 0.8);
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 12px 20px;
+  border-radius: 12px;
+  padding: 12px 24px;
   cursor: pointer;
-  margin-left: 15px;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 #ui button:hover {
-  background: rgba(0, 150, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+}
+
+#ui button:active {
+  transform: translateY(0);
+}
+
+#ui button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 #status {
   display: block;
   text-align: center;
-  font-weight: bold;
-  font-size: 20px;
-  margin-top: 15px;
-  padding: 8px;
+  font-weight: 700;
+  font-size: 18px;
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  letter-spacing: 0.5px;
 }
 
 #video-list {
-  margin-top: 15px;
-  max-height: 200px;
+  margin-top: 20px;
+  max-height: 250px;
   overflow-y: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 16px;
 }
 
 #video-list h3 {
-  margin: 0 0 10px 0;
-  font-size: 14px;
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .video-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px;
-  margin: 5px 0;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.video-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .download-btn {
-  padding: 4px 8px;
-  background: #3498db;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
-  transition: background 0.3s;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .download-btn:hover {
-  background: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Loading overlay styles */
@@ -176,8 +229,27 @@ canvas {
 }
 
 /* Disabled state styles */
-#mode-selector input[type="radio"]:disabled + span,
-#mode-selector label:has(input[type="radio"]:disabled) {
+#ui select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbar styling for video list */
+#video-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#video-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+#video-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+#video-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
