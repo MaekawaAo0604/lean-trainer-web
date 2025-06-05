@@ -44,11 +44,15 @@ async function init() {
     // 初期状態を通常モードに設定
     setMode('normal');
     
+    // ローディング完了
+    hideLoading();
+    
     statusEl.textContent = 'READY';
     loop();
   } catch (e) {
-    console.error('Camera initialization error:', e);
-    statusEl.textContent = 'CAMERA ERROR: ' + e.name + ' - ' + e.message;
+    console.error('Initialization error:', e);
+    statusEl.textContent = 'ERROR: ' + e.name + ' - ' + e.message;
+    hideLoading();
   }
 
   // Service Worker登録（public/sw.js を指す）
@@ -109,6 +113,19 @@ function initUI() {
 
   updateModeUI();
   updateVideoList();
+}
+
+function hideLoading() {
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const modeRadios = document.querySelectorAll('input[name="mode"]');
+  
+  // ローディングオーバーレイを非表示
+  loadingOverlay.style.display = 'none';
+  
+  // モード選択を有効化
+  modeRadios.forEach(radio => {
+    radio.disabled = false;
+  });
 }
 
 function updateModeUI() {
@@ -180,14 +197,6 @@ function loop() {
       // 録画モードでは動画を保存
       if (currentMode === 'recording' && recordingSupported) {
         captureHitVideo();
-        // Hit後のクールダウン中は録画を一時停止
-        stopRecording();
-        // 2秒後（クールダウン終了後）に録画再開
-        setTimeout(() => {
-          if (getCurrentMode() === 'recording' && recordingSupported && isTrainingStarted()) {
-            startRecording();
-          }
-        }, 2000);
       }
       
       const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';

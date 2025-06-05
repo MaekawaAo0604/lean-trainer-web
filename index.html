@@ -13,16 +13,23 @@
   <canvas id="overlay"></canvas>
   <div id="flash"></div>
 
+  <div id="loading-overlay">
+    <div id="loading-content">
+      <div id="loading-spinner"></div>
+      <p>準備中...</p>
+    </div>
+  </div>
+
   <div id="ui">
     <div id="mode-selector">
       <label>
-        <input type="radio" name="mode" value="normal" checked> 通常モード
+        <input type="radio" name="mode" value="normal" checked disabled> 通常モード
       </label>
       <label>
-        <input type="radio" name="mode" value="recording"> 録画モード
+        <input type="radio" name="mode" value="recording" disabled> 録画モード
       </label>
       <label>
-        <input type="radio" name="mode" value="rest"> 休憩モード
+        <input type="radio" name="mode" value="rest" disabled> 休憩モード
       </label>
     </div>
     
