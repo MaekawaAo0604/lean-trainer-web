@@ -4,7 +4,7 @@ import { initDetector } from './modules/detector.js';
 import { judge } from './modules/hitJudge.js';
 import { flashHit } from './modules/flash.js';
 import { saveHit, saveSuccess } from './modules/storage.js';
-import { initRecording, captureHitVideo, getVideoList, clearVideoList } from './modules/recording.js';
+import { initRecording, captureHitVideo, getVideoList, clearVideoList, downloadVideo } from './modules/recording.js';
 import { setMode, getCurrentMode, startWaitingPhase, isTrainingStarted, resetTraining } from './modules/modes.js';
 
 const video = document.getElementById('cam');
@@ -123,8 +123,17 @@ function updateVideoList() {
     item.innerHTML = `
       <span>${video.filename}</span>
       <span>${new Date(video.timestamp).toLocaleTimeString()}</span>
+      <button class="download-btn" data-video-id="${video.id}">ダウンロード</button>
     `;
     videosContainer.appendChild(item);
+  });
+  
+  // Add event listeners to download buttons
+  document.querySelectorAll('.download-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const videoId = e.target.getAttribute('data-video-id');
+      downloadVideo(videoId);
+    });
   });
 }
 

@@ -69,27 +69,34 @@ function saveVideo() {
     type: MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4'
   });
 
-  const url = URL.createObjectURL(blob);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = `hit-${timestamp}`;
   
-  // ローカルストレージに動画情報を保存
-  saveVideoInfo(filename, url, blob.size);
-  
-  // 自動ダウンロード
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}.${MediaRecorder.isTypeSupported('video/webm') ? 'webm' : 'mp4'}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  
-  console.log(`Hit video saved: ${filename}`);
+  // Convert blob to base64 for storage
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64data = reader.result;
+    
+    // ローカルストレージに動画情報を保存
+    saveVideoInfo(filename, base64data, blob.size);
+    
+    // 自動ダウンロード
+    const a = document.createElement('a');
+    a.href = base64data;
+    a.download = `${filename}.${MediaRecorder.isTypeSupported('video/webm') ? 'webm' : 'mp4'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    console.log(`Hit video saved: ${filename}`);
+  };
+  reader.readAsDataURL(blob);
 }
 
 function saveVideoInfo(filename, url, size) {
   const videos = JSON.parse(localStorage.getItem('hit-videos') || '[]');
   videos.push({
+    id: Date.now().toString(),
     filename,
     url,
     size,
@@ -107,6 +114,33 @@ function saveVideoInfo(filename, url, size) {
 
 export function getVideoList() {
   return JSON.parse(localStorage.getItem('hit-videos') || '[]');
+}
+
+export function downloadVideo(videoId) {
+  const videos = getVideoList();
+  const video = videos.find(v => v.id === videoId);
+  
+  if (!video) {
+    console.error('Video not found:', videoId);
+    return false;
+  }
+
+  // 再ダウンロード用のリンクを作成
+  const a = document.createElement('a');
+  a.href = video.url;
+  a.download = `${video.filename}.${video.url.includes('webm') ? 'webm' : 'mp4'}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  return true;
+}
+
+export function deleteVideo(videoId) {
+  const videos = getVideoList();
+  const updatedVideos = videos.filter(v => v.id !== videoId);
+  localStorage.setItem('hit-videos', JSON.stringify(updatedVideos));
+  return true;
 }
 
 export function clearVideoList() {
