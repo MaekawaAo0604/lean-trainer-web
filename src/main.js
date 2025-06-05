@@ -105,25 +105,51 @@ function initUI() {
       if (videoId) {
         console.log(`Download button clicked for video ID: ${videoId}`);
         
+        // ユーザーの直接クリックを利用してダウンロード実行
+        e.preventDefault();
+        e.stopPropagation();
+        
         e.target.disabled = true;
-        e.target.textContent = 'DL中...';
+        e.target.textContent = 'DL準備中...';
         
         try {
-          const success = await downloadVideo(videoId);
+          // 動画データを取得
+          const videos = await getVideoList();
+          const video = videos.find(v => v.id === videoId);
           
-          if (success) {
-            e.target.textContent = '完了';
-            setTimeout(() => {
-              e.target.disabled = false;
-              e.target.textContent = 'ダウンロード';
-            }, 2000);
-          } else {
-            e.target.textContent = 'エラー';
-            setTimeout(() => {
-              e.target.disabled = false;
-              e.target.textContent = 'ダウンロード';
-            }, 2000);
+          if (!video) {
+            throw new Error('Video not found');
           }
+          
+          // Blob URLを作成
+          const url = URL.createObjectURL(video.blob);
+          const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
+          const filename = `${video.filename}.${extension}`;
+          
+          // ユーザーの直接クリックでダウンロードリンクを作成
+          const downloadLink = document.createElement('a');
+          downloadLink.href = url;
+          downloadLink.download = filename;
+          downloadLink.style.display = 'none';
+          
+          // リンクをボタンの近くに配置
+          e.target.parentNode.appendChild(downloadLink);
+          
+          // ユーザーのクリックイベントを使ってダウンロード実行
+          downloadLink.click();
+          
+          e.target.textContent = '完了';
+          
+          // クリーンアップ
+          setTimeout(() => {
+            if (downloadLink.parentNode) {
+              downloadLink.parentNode.removeChild(downloadLink);
+            }
+            URL.revokeObjectURL(url);
+            e.target.disabled = false;
+            e.target.textContent = 'ダウンロード';
+          }, 2000);
+          
         } catch (error) {
           console.error('Download error:', error);
           e.target.textContent = 'エラー';

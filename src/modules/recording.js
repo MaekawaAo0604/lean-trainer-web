@@ -161,35 +161,91 @@ export async function downloadVideo(videoId) {
     
     console.log(`Starting download: ${filename}, size: ${video.blob.size} bytes`);
     
-    // シンプルで確実なダウンロード方法
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
+    // 複数のダウンロード方法を試行
+    let downloadSuccess = false;
     
-    document.body.appendChild(a);
-    
+    // 方法1: 標準的なダウンロード
     try {
-      // クリックイベントを発火
-      a.click();
-      console.log(`Download click executed for: ${filename}`);
-    } catch (clickError) {
-      console.error('Click failed:', clickError);
-      return false;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      
+      document.body.appendChild(a);
+      
+      // ユーザーインタラクションイベントを模擬
+      const clickEvent = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      
+      const dispatched = a.dispatchEvent(clickEvent);
+      console.log(`Method 1 - Standard download dispatched: ${dispatched}`);
+      
+      // 少し待ってからクリーンアップ
+      setTimeout(() => {
+        if (document.body.contains(a)) {
+          document.body.removeChild(a);
+        }
+      }, 100);
+      
+      downloadSuccess = true;
+    } catch (error) {
+      console.error('Method 1 failed:', error);
+    }
+    
+    // 方法2: 直接クリック（フォールバック）
+    if (!downloadSuccess) {
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`Method 2 - Direct click executed`);
+        downloadSuccess = true;
+      } catch (error) {
+        console.error('Method 2 failed:', error);
+      }
+    }
+    
+    // 方法3: WindowオブジェクトのOpen（最終フォールバック）
+    if (!downloadSuccess) {
+      try {
+        // 新しいウィンドウで開く（ダウンロードとして扱われることがある）
+        const downloadWindow = window.open(url, '_blank');
+        if (downloadWindow) {
+          downloadWindow.document.title = filename;
+          setTimeout(() => downloadWindow.close(), 1000);
+        }
+        console.log(`Method 3 - Window open executed`);
+        downloadSuccess = true;
+      } catch (error) {
+        console.error('Method 3 failed:', error);
+      }
     }
     
     // クリーンアップ
     setTimeout(() => {
       try {
-        if (document.body.contains(a)) {
-          document.body.removeChild(a);
-        }
         URL.revokeObjectURL(url);
         console.log(`Cleanup completed for: ${filename}`);
       } catch (cleanupError) {
         console.error('Cleanup failed:', cleanupError);
       }
-    }, 2000); // クリーンアップ時間を延長
+    }, 3000); // より長い時間に延長
+    
+    if (downloadSuccess) {
+      console.log(`Download initiated successfully: ${filename}`);
+    } else {
+      console.error(`All download methods failed for: ${filename}`);
+    }
     
     return true;
   } catch (error) {
