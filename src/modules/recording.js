@@ -6,10 +6,7 @@ let recordedChunks = [];
 let isRecording = false;
 let recordingBuffer = [];
 let shouldRecord = false; // 録画すべきかどうかのフラグ
-let circularBuffer = []; // 過去の録画データを保持するcircular buffer
-const BUFFER_DURATION = 200; // 200ms間隔でデータ取得
-const PRE_HIT_DURATION = 2000; // 2秒前までの録画を保持
-const MAX_BUFFER_CHUNKS = PRE_HIT_DURATION / BUFFER_DURATION; // 最大10チャンク（2秒分）
+const BUFFER_DURATION = 3000; // 3秒間のバッファ
 
 // 初期化時にIndexedDBも初期化
 initDB().catch(console.error);
@@ -31,26 +28,14 @@ export function initRecording(stream) {
   
   mediaRecorder.ondataavailable = (event) => {
     if (event.data.size > 0) {
-      const chunk = {
-        data: event.data,
-        timestamp: Date.now()
-      };
-      
-      // Circular bufferに追加
-      if (shouldRecord) {
-        circularBuffer.push(chunk);
-        
-        // バッファサイズを制限
-        if (circularBuffer.length > MAX_BUFFER_CHUNKS) {
-          circularBuffer.shift();
-        }
-      }
+      recordedChunks.push(event.data);
     }
   };
 
   mediaRecorder.onstop = () => {
-    // Hit時にのみ保存処理を実行
-    // 通常の停止時は何もしない
+    if (recordedChunks.length > 0) {
+      saveVideo();
+    }
   };
 
   // 録画の準備完了（手動で開始する）
@@ -59,9 +44,16 @@ export function initRecording(stream) {
 
 function startBufferRecording() {
   if (mediaRecorder && mediaRecorder.state === 'inactive' && shouldRecord) {
-    circularBuffer = []; // バッファをクリア
-    mediaRecorder.start(BUFFER_DURATION); // 200ms間隔でデータ取得
-    isRecording = true;
+    recordedChunks = [];
+    mediaRecorder.start(100); // 100ms間隔でデータ取得
+    
+    // バッファサイズを制限
+    setTimeout(() => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        setTimeout(startBufferRecording, 10); // 短い間隔で再開
+      }
+    }, BUFFER_DURATION);
   }
 }
 
@@ -80,25 +72,29 @@ export function stopRecording() {
     mediaRecorder.stop();
     isRecording = false;
   }
-  circularBuffer = []; // バッファをクリア
 }
 
 export function captureHitVideo() {
-  if (!mediaRecorder || !shouldRecord || circularBuffer.length === 0) return;
+  if (!mediaRecorder || !shouldRecord) return;
   
-  // 現在のcircular bufferからデータを取得して保存
-  const chunksToSave = [...circularBuffer.map(chunk => chunk.data)];
-  
-  if (chunksToSave.length > 0) {
-    saveVideoFromChunks(chunksToSave);
+  // Hit時点での録画データを保存
+  if (mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    isRecording = false;
+    // 録画を再開（次のHitに備える）
+    setTimeout(() => {
+      if (shouldRecord) {
+        startBufferRecording();
+      }
+    }, 100);
   }
 }
 
-async function saveVideoFromChunks(chunks) {
-  if (chunks.length === 0) return;
+async function saveVideo() {
+  if (recordedChunks.length === 0) return;
 
   const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
-  const blob = new Blob(chunks, { type: mimeType });
+  const blob = new Blob(recordedChunks, { type: mimeType });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = `hit-${timestamp}`;
@@ -118,7 +114,7 @@ async function saveVideoFromChunks(chunks) {
     await saveVideoToDB(videoData);
     await cleanupOldVideos(); // 古い動画を削除
     
-    console.log(`Hit video saved: ${filename} (${Math.round(blob.size / 1024)}KB, ${chunks.length} chunks)`);
+    console.log(`Hit video saved: ${filename}`);
     
     // 動画保存完了を通知
     window.dispatchEvent(new CustomEvent('videoSaved', { detail: videoData }));
@@ -126,8 +122,6 @@ async function saveVideoFromChunks(chunks) {
     console.error('Error saving video:', error);
   }
 }
-
-// 古いsaveVideo関数は削除（不要になった）
 
 export async function getVideoList() {
   try {
