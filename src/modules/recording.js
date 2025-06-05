@@ -1,9 +1,14 @@
 // src/modules/recording.js
+import { initDB, saveVideoToDB, getAllVideos, getVideo, deleteVideoFromDB, clearAllVideos, cleanupOldVideos } from './videoStorage.js';
+
 let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 let recordingBuffer = [];
 const BUFFER_DURATION = 3000; // 3秒間のバッファ
+
+// 初期化時にIndexedDBも初期化
+initDB().catch(console.error);
 
 export function initRecording(stream) {
   if (!MediaRecorder.isTypeSupported('video/webm')) {
@@ -62,87 +67,104 @@ export function captureHitVideo() {
   }
 }
 
-function saveVideo() {
+async function saveVideo() {
   if (recordedChunks.length === 0) return;
 
-  const blob = new Blob(recordedChunks, {
-    type: MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4'
-  });
+  const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+  const blob = new Blob(recordedChunks, { type: mimeType });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filename = `hit-${timestamp}`;
+  const extension = mimeType.includes('webm') ? 'webm' : 'mp4';
   
-  // Convert blob to base64 for storage
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    const base64data = reader.result;
-    
-    // ローカルストレージに動画情報を保存
-    saveVideoInfo(filename, base64data, blob.size);
+  // BlobをIndexedDBに保存
+  const videoData = {
+    id: Date.now().toString(),
+    filename,
+    blob,
+    mimeType,
+    size: blob.size,
+    timestamp: new Date().toISOString()
+  };
+  
+  try {
+    await saveVideoToDB(videoData);
+    await cleanupOldVideos(); // 古い動画を削除
     
     // 自動ダウンロード
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = base64data;
-    a.download = `${filename}.${MediaRecorder.isTypeSupported('video/webm') ? 'webm' : 'mp4'}`;
+    a.href = url;
+    a.download = `${filename}.${extension}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log(`Hit video saved: ${filename}`);
+  } catch (error) {
+    console.error('Error saving video:', error);
+  }
+}
+
+export async function getVideoList() {
+  try {
+    return await getAllVideos();
+  } catch (error) {
+    console.error('Error getting video list:', error);
+    return [];
+  }
+}
+
+export async function downloadVideo(videoId) {
+  try {
+    const video = await getVideo(videoId);
+    
+    if (!video) {
+      console.error('Video not found:', videoId);
+      return false;
+    }
+
+    // BlobからURLを作成
+    const url = URL.createObjectURL(video.blob);
+    const extension = video.mimeType.includes('webm') ? 'webm' : 'mp4';
+    
+    // ダウンロード用のリンクを作成
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${video.filename}.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     
-    console.log(`Hit video saved: ${filename}`);
-  };
-  reader.readAsDataURL(blob);
-}
-
-function saveVideoInfo(filename, url, size) {
-  const videos = JSON.parse(localStorage.getItem('hit-videos') || '[]');
-  videos.push({
-    id: Date.now().toString(),
-    filename,
-    url,
-    size,
-    timestamp: new Date().toISOString(),
-    downloaded: true
-  });
-  
-  // 最新10件のみ保持
-  if (videos.length > 10) {
-    videos.splice(0, videos.length - 10);
-  }
-  
-  localStorage.setItem('hit-videos', JSON.stringify(videos));
-}
-
-export function getVideoList() {
-  return JSON.parse(localStorage.getItem('hit-videos') || '[]');
-}
-
-export function downloadVideo(videoId) {
-  const videos = getVideoList();
-  const video = videos.find(v => v.id === videoId);
-  
-  if (!video) {
-    console.error('Video not found:', videoId);
+    // URLを解放
+    URL.revokeObjectURL(url);
+    
+    console.log(`Downloading video: ${video.filename}.${extension}`);
+    
+    return true;
+  } catch (error) {
+    console.error('Error downloading video:', error);
     return false;
   }
-
-  // 再ダウンロード用のリンクを作成
-  const a = document.createElement('a');
-  a.href = video.url;
-  a.download = `${video.filename}.${video.url.includes('webm') ? 'webm' : 'mp4'}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  
-  return true;
 }
 
-export function deleteVideo(videoId) {
-  const videos = getVideoList();
-  const updatedVideos = videos.filter(v => v.id !== videoId);
-  localStorage.setItem('hit-videos', JSON.stringify(updatedVideos));
-  return true;
+export async function deleteVideo(videoId) {
+  try {
+    await deleteVideoFromDB(videoId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    return false;
+  }
 }
 
-export function clearVideoList() {
-  localStorage.removeItem('hit-videos');
+export async function clearVideoList() {
+  try {
+    await clearAllVideos();
+    return true;
+  } catch (error) {
+    console.error('Error clearing video list:', error);
+    return false;
+  }
 }

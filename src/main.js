@@ -84,9 +84,9 @@ function initUI() {
 
   // 動画リスト管理
   const clearVideosBtn = document.getElementById('clear-videos');
-  clearVideosBtn.addEventListener('click', () => {
-    clearVideoList();
-    updateVideoList();
+  clearVideosBtn.addEventListener('click', async () => {
+    await clearVideoList();
+    await updateVideoList();
   });
 
   updateModeUI();
@@ -111,8 +111,8 @@ function updateModeUI() {
   }
 }
 
-function updateVideoList() {
-  const videos = getVideoList();
+async function updateVideoList() {
+  const videos = await getVideoList();
   const videosContainer = document.getElementById('videos');
   
   videosContainer.innerHTML = '';
@@ -130,9 +130,9 @@ function updateVideoList() {
   
   // Add event listeners to download buttons
   document.querySelectorAll('.download-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const videoId = e.target.getAttribute('data-video-id');
-      downloadVideo(videoId);
+      await downloadVideo(videoId);
     });
   });
 }
@@ -162,7 +162,7 @@ function loop() {
       // 録画モードでは動画を保存
       if (currentMode === 'recording' && recordingSupported) {
         captureHitVideo();
-        updateVideoList();
+        setTimeout(() => updateVideoList(), 1000); // 保存処理の完了を待つ
       }
       
       const hitType = result.isArmsOnly ? 'ARMS HIT!' : 'FULL HIT!';
